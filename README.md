@@ -43,7 +43,7 @@ export default defineConfig({
       options: {
         measurementId: "G-XXXXXXXX", // Your GA4 Measurement ID
         apiSecret: "XXXXXXXXXX", // Your GA4 API Secret
-        debug: false, // Optional, enables debug mode for detailed logging
+        debug: false, // Optional, enables debug mode - no events will be sent to your property when debug is active!
       },
     },
   ],
