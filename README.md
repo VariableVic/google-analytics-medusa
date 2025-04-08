@@ -1,64 +1,124 @@
-<p align="center">
-  <a href="https://www.medusajs.com">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/59018053/229103275-b5e482bb-4601-46e6-8142-244f531cebdb.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/59018053/229103726-e5b529a3-9b3f-4970-8a1f-c6af37f087bf.svg">
-    <img alt="Medusa logo" src="https://user-images.githubusercontent.com/59018053/229103726-e5b529a3-9b3f-4970-8a1f-c6af37f087bf.svg">
-    </picture>
-  </a>
-</p>
-<h1 align="center">
-  Medusa Plugin Starter
-</h1>
+# Medusa GA4 Plugin
 
-<h4 align="center">
-  <a href="https://docs.medusajs.com">Documentation</a> |
-  <a href="https://www.medusajs.com">Website</a>
-</h4>
+A Google Analytics 4 plugin for Medusa that automatically tracks ecommerce events on your backend. This plugin implements server-side tracking for key ecommerce events in your Medusa store.
 
-<p align="center">
-  Building blocks for digital commerce
-</p>
-<p align="center">
-  <a href="https://github.com/medusajs/medusa/blob/master/CONTRIBUTING.md">
-    <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat" alt="PRs welcome!" />
-  </a>
-    <a href="https://www.producthunt.com/posts/medusa"><img src="https://img.shields.io/badge/Product%20Hunt-%231%20Product%20of%20the%20Day-%23DA552E" alt="Product Hunt"></a>
-  <a href="https://discord.gg/xpCwq3Kfn8">
-    <img src="https://img.shields.io/badge/chat-on%20discord-7289DA.svg" alt="Discord Chat" />
-  </a>
-  <a href="https://twitter.com/intent/follow?screen_name=medusajs">
-    <img src="https://img.shields.io/twitter/follow/medusajs.svg?label=Follow%20@medusajs" alt="Follow @medusajs" />
-  </a>
-</p>
+## Features
 
-## Compatibility
+The plugin automatically tracks the following GA4 ecommerce events:
 
-This starter is compatible with versions >= 2.4.0 of `@medusajs/medusa`. 
+- `add_to_cart` - When items are added to a cart
+- `remove_from_cart` - When items are removed from a cart
+- `add_shipping_info` - When shipping information is added to a cart
+- `add_payment_info` - When payment information is added
+- `purchase` - When an order is placed
 
-## Getting Started
+## Prerequisites
 
-Visit the [Quickstart Guide](https://docs.medusajs.com/learn/installation) to set up a server.
+- [Medusa backend](https://docs.medusajs.com/development/backend/install)
+- Google Analytics 4 property
 
-Visit the [Plugins documentation](https://docs.medusajs.com/learn/fundamentals/plugins) to learn more about plugins and how to create them.
+## Installation
 
-Visit the [Docs](https://docs.medusajs.com/learn/installation#get-started) to learn more about our system requirements.
+```bash
+yarn add @variablevic/google-analytics
+```
 
-## What is Medusa
+## Configuration
 
-Medusa is a set of commerce modules and tools that allow you to build rich, reliable, and performant commerce applications without reinventing core commerce logic. The modules can be customized and used to build advanced ecommerce stores, marketplaces, or any product that needs foundational commerce primitives. All modules are open-source and freely available on npm.
+Add the plugin to your `medusa-config.ts`:
 
-Learn more about [Medusa’s architecture](https://docs.medusajs.com/learn/introduction/architecture) and [commerce modules](https://docs.medusajs.com/learn/fundamentals/modules/commerce-modules) in the Docs.
+```typescript
+import { defineConfig } from "@medusajs/utils";
 
-## Community & Contributions
+// ... other imports and environment variables
 
-The community and core team are available in [GitHub Discussions](https://github.com/medusajs/medusa/discussions), where you can ask for support, discuss roadmap, and share ideas.
+export default defineConfig({
+  // ... other configurations
+  plugins: [
+    // ... other plugins
+    {
+      resolve: "@variablevic/google-analytics",
+      options: {
+        measurementId: "G-XXXXXXXX", // Your GA4 Measurement ID
+        apiSecret: "XXXXXXXXXX", // Your GA4 API Secret
+        debug: false, // Optional, enables debug mode for detailed logging
+      },
+    },
+  ],
+});
+```
 
-Join our [Discord server](https://discord.com/invite/medusajs) to meet other community members.
+### Client-Side Setup
 
-## Other channels
+This plugin handles server-side events, but some GA4 ecommerce events need to be implemented on the client side due to their nature:
 
-- [GitHub Issues](https://github.com/medusajs/medusa/issues)
-- [Twitter](https://twitter.com/medusajs)
-- [LinkedIn](https://www.linkedin.com/company/medusajs)
-- [Medusa Blog](https://medusajs.com/blog/)
+- `view_item` - Product views
+- `begin_checkout` - Checkout initiation
+- `sign_up` - User registration
+- `login` - User login
+
+Additionally, to properly associate events with users, you need to set the GA client ID as metadata when creating a cart. Here's how to do it in the Next.js Starter:
+
+1. Get the GA client ID from the cookie:
+
+```typescript
+export const getGaClientId = async (): Promise<string | null> => {
+  const cookies = await nextCookies();
+  const gaClientIdCookie = cookies.get("_ga")?.value;
+
+  const gaClientId = (gaClientIdCookie as string)
+    .split(".")
+    .slice(-2)
+    .join(".");
+
+  return gaClientId;
+};
+```
+
+2. Set the client ID as cart metadata during cart creation:
+
+```typescript
+const gaClientId = await getGaClientId();
+
+const body = {
+  region_id: region.id,
+} as Record<string, any>;
+
+if (gaClientId) {
+  body.metadata = {
+    ga_client_id: gaClientId,
+  };
+}
+
+const cartResp = await sdk.store.cart.create(body, {}, headers);
+```
+
+## Events Data Format
+
+The plugin automatically formats cart and order data according to GA4's ecommerce event specifications. Each event includes:
+
+- Currency code
+- Transaction value
+- Item-level details (name, variant, quantity, price)
+- Customer information when available
+
+## Development
+
+1. Clone this repository
+2. Install dependencies: `yarn install`
+3. Build the project: `yarn build`
+4. Test the plugin: `yarn test`
+
+For local development and testing:
+
+```bash
+npx medusa plugin:develop
+```
+
+## Contributing
+
+Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) before submitting a pull request.
+
+## License
+
+MIT
