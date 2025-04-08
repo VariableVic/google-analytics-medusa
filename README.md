@@ -22,7 +22,7 @@ The plugin automatically tracks the following GA4 ecommerce events:
 ## Installation
 
 ```bash
-yarn add @variablevic/google-analytics
+yarn add @variablevic/google-analytics-medusa
 ```
 
 ## Configuration
@@ -39,7 +39,7 @@ export default defineConfig({
   plugins: [
     // ... other plugins
     {
-      resolve: "@variablevic/google-analytics",
+      resolve: "@variablevic/google-analytics-medusa",
       options: {
         measurementId: "G-XXXXXXXX", // Your GA4 Measurement ID
         apiSecret: "XXXXXXXXXX", // Your GA4 API Secret
