@@ -1,0 +1,50 @@
+interface PredefinedEventParams {
+  [key: string]: string[];
+}
+
+export const PREDEFINED_EVENTS: PredefinedEventParams = {
+  add_payment_info: ["coupon", "currency", "items", "payment_type", "value"],
+  add_shipping_info: ["coupon", "currency", "items", "shipping_tier", "value"],
+  add_to_cart: ["currency", "items", "value"],
+  add_to_wishlist: ["currency", "items", "value"],
+  begin_checkout: ["coupon", "currency", "items", "value"],
+  generate_lead: ["value", "currency"],
+  login: ["method"],
+  page_view: ["page_location", "page_referrer"],
+  purchase: [
+    "affiliation",
+    "coupon",
+    "currency",
+    "items",
+    "transaction_id",
+    "shipping",
+    "tax",
+    "value",
+  ],
+  refund: ["transaction_id", "value", "currency", "tax", "shipping", "items"],
+  remove_from_cart: ["currency", "items", "value"],
+  search: ["search_term"],
+  select_content: ["content_type", "item_id"],
+  select_item: ["items", "item_list_name", "item_list_id"],
+  select_promotion: [
+    "items",
+    "promotion_id",
+    "promotion_name",
+    "creative_name",
+    "creative_slot",
+    "location_id",
+  ],
+  share: ["content_type", "item_id"],
+  sign_up: ["method"],
+  view_cart: ["currency", "items", "value"],
+  view_item: ["currency", "items", "value"],
+  view_item_list: ["items", "item_list_name", "item_list_id"],
+  view_promotion: [
+    "items",
+    "promotion_id",
+    "promotion_name",
+    "creative_name",
+    "creative_slot",
+    "location_id",
+  ],
+};
