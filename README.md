@@ -1,6 +1,6 @@
 # Medusa GA4 Plugin
 
-A Google Analytics 4 plugin for Medusa that automatically tracks ecommerce events on your backend. This plugin implements server-side tracking for key ecommerce events in your Medusa store.
+A Google Analytics 4 plugin for Medusa that automatically tracks ecommerce events on your backend using Measurement Protocol. This plugin implements server-side tracking for key ecommerce events in your Medusa store.
 
 ## Features
 
@@ -16,11 +16,13 @@ The plugin automatically tracks the following GA4 ecommerce events:
 
 - [Medusa backend](https://docs.medusajs.com/development/backend/install)
 - Google Analytics 4 property
+- GA4 Measurement ID
+- GA4 [API Secret](https://support.google.com/analytics/answer/9814495)
 
 ## Installation
 
 ```bash
-yarn add @variablevic/google-analytics
+yarn add @variablevic/google-analytics-medusa
 ```
 
 ## Configuration
@@ -37,11 +39,11 @@ export default defineConfig({
   plugins: [
     // ... other plugins
     {
-      resolve: "@variablevic/google-analytics",
+      resolve: "@variablevic/google-analytics-medusa",
       options: {
         measurementId: "G-XXXXXXXX", // Your GA4 Measurement ID
         apiSecret: "XXXXXXXXXX", // Your GA4 API Secret
-        debug: false, // Optional, enables debug mode for detailed logging
+        debug: false, // Optional, enables debug mode - no events will be sent to your property when debug is active!
       },
     },
   ],
@@ -57,7 +59,7 @@ This plugin handles server-side events, but some GA4 ecommerce events need to be
 - `sign_up` - User registration
 - `login` - User login
 
-Additionally, to properly associate events with users, you need to set the GA client ID as metadata when creating a cart. Here's how to do it in the Next.js Starter:
+Additionally, to properly associate events with users, you need to set the GA client ID as metadata when creating a cart. Here's how to do it in the [Next.js Starter](https://github.com/medusajs/nextjs-starter-medusa):
 
 1. Get the GA client ID from the cookie:
 
