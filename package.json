@@ -1,6 +1,6 @@
 {
   "name": "@variablevic/google-analytics-medusa",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A Medusa plugin for sending ecommerce spec events to Google Analytics using the Measurement Protocol.",
   "author": "Victor Gerbrands (@VariableVic)",
   "license": "MIT",
