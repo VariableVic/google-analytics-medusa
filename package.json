@@ -1,5 +1,5 @@
 {
-  "name": "@variablevic/google-analytics",
+  "name": "@variablevic/google-analytics-medusa",
   "version": "0.0.1",
   "description": "A Medusa plugin for sending ecommerce spec events to Google Analytics using the Measurement Protocol.",
   "author": "Victor Gerbrands (@VariableVic)",
@@ -16,11 +16,10 @@
     "./*": "./.medusa/server/src/*.js"
   },
   "keywords": [
-    "medusa",
-    "plugin",
-    "medusa-plugin-other",
-    "medusa-plugin",
-    "medusa-v2"
+    "medusa-plugin-integration",
+    "medusa-v2",
+    "medusa-plugin-analytics",
+    "medusa-google-analytics"
   ],
   "scripts": {
     "build": "medusa plugin:build",
@@ -74,5 +73,5 @@
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "yarn@4.4.0+sha512.91d93b445d9284e7ed52931369bc89a663414e5582d00eea45c67ddc459a2582919eece27c412d6ffd1bd0793ff35399381cb229326b961798ce4f4cc60ddfdb"
+  "packageManager": "yarn@4.5.1"
 }

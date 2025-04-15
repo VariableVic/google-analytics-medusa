@@ -7963,9 +7963,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@variablevic/google-analytics@workspace:.":
+"@variablevic/google-analytics-medusa@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@variablevic/google-analytics@workspace:."
+  resolution: "@variablevic/google-analytics-medusa@workspace:."
   dependencies:
     "@medusajs/admin-sdk": "npm:2.5.1"
     "@medusajs/cli": "npm:2.5.1"

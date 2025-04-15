@@ -1,0 +1,139 @@
+name: Release and Publish Package
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Verify/Create .yarnrc.yml
+        run: |
+          if [ ! -f .yarnrc.yml ]; then
+            echo "nodeLinker: node-modules" > .yarnrc.yml
+            echo "Created .yarnrc.yml with nodeLinker: node-modules"
+          else
+            echo "Existing .yarnrc.yml content:"
+            cat .yarnrc.yml
+            if ! grep -q "nodeLinker: node-modules" .yarnrc.yml; then
+              echo "nodeLinker: node-modules" >> .yarnrc.yml
+              echo "Added nodeLinker: node-modules to existing .yarnrc.yml"
+            fi
+          fi
+
+      - name: Diagnostic - Print package.json
+        run: cat package.json
+
+      - name: Get version from package.json
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
+
+      - name: Check latest GitHub release
+        id: check-version
+        run: |
+          # Get current version from package.json
+          CURRENT_VERSION="${{ steps.package-version.outputs.current-version }}"
+          echo "Current version from package.json: $CURRENT_VERSION"
+
+          # Get latest GitHub release tag
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest 2>/dev/null || echo '{"tag_name":"v0.0.0"}')
+
+          # Check if we got a valid response
+          if echo "$LATEST_RELEASE" | grep -q "tag_name"; then
+            # Extract version from tag (usually in format v0.0.1)
+            LATEST_VERSION=$(echo "$LATEST_RELEASE" | jq -r '.tag_name' | sed 's/^v//') 
+          else
+            # No releases found, use 0.0.0 as default
+            LATEST_VERSION="0.0.0"
+            echo "No previous GitHub releases found, using $LATEST_VERSION as baseline"
+          fi
+
+          echo "Latest GitHub release version: $LATEST_VERSION"
+
+          # Compare versions
+          if [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
+            echo "Version changed from $LATEST_VERSION to $CURRENT_VERSION"
+            echo "version_changed=true" >> $GITHUB_OUTPUT
+            echo "prev_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "Version unchanged: $CURRENT_VERSION"
+            echo "version_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Debug Outputs
+        run: |
+          echo "Version changed: ${{ steps.check-version.outputs.version_changed }}"
+          echo "Previous version: ${{ steps.check-version.outputs.prev_version }}"
+          echo "Current version: ${{ steps.package-version.outputs.current-version }}"
+
+      # Only run the remaining steps if the version has changed
+      - name: Install dependencies
+        if: steps.check-version.outputs.version_changed == 'true'
+        run: yarn install --immutable
+
+      - name: Diagnostic - Print workspace info
+        if: steps.check-version.outputs.version_changed == 'true'
+        run: yarn workspaces list || echo "No workspaces found"
+
+      - name: Build package
+        if: steps.check-version.outputs.version_changed == 'true'
+        run: yarn build
+
+      - name: Create GitHub Release
+        if: steps.check-version.outputs.version_changed == 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.package-version.outputs.current-version }}
+          release_name: Release v${{ steps.package-version.outputs.current-version }}
+          draft: false
+          prerelease: false
+
+      - name: Setup NPM Authentication
+        if: steps.check-version.outputs.version_changed == 'true'
+        run: |
+          # Create .npmrc file with auth token for publishing
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+          echo "registry=https://registry.npmjs.org/" >> .npmrc
+          # Update Yarn configuration to use npmAuthToken
+          yarn config set npmAuthToken "${{ secrets.NPM_TOKEN }}"
+          yarn config set npmRegistryServer "https://registry.npmjs.org"
+          # Print debug info
+          echo "NPM config files:"
+          ls -la ~/.npmrc .npmrc 2>/dev/null || echo "No .npmrc found"
+          echo "Yarn config:"
+          yarn config get npmAuthToken || echo "No npmAuthToken found"
+          yarn config get npmRegistryServer || echo "No npmRegistryServer found"
+
+      - name: Publish to npm
+        if: steps.check-version.outputs.version_changed == 'true'
+        run: |
+          # Try to publish using npm directly if Yarn has issues
+          echo "Attempting to publish with npm..."
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Clean up
+        if: always()
+        run: |
+          # Clean up .npmrc to not leave tokens behind
+          rm -f .npmrc || true
